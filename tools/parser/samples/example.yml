@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog>
+  <shop>
+    <name>Пример партнёра</name>
+    <offers>
+      <offer id="101" available="true">
+        <name>Робот Отто шагающий, набор для сборки</name>
+        <url>https://partner.ru/otto</url>
+        <price>4990</price>
+        <oldprice>5990</oldprice>
+        <categoryId>1</categoryId>
+      </offer>
+      <offer id="102" available="true">
+        <name>Электронный конструктор 180 схем</name>
+        <url>https://partner.ru/180</url>
+        <price>2790</price>
+        <categoryId>2</categoryId>
+      </offer>
+      <offer id="103" available="true">
+        <name>Набор для опытов: извержение вулкана</name>
+        <url>https://partner.ru/vulkan</url>
+        <price>990</price>
+        <categoryId>3</categoryId>
+      </offer>
+      <offer id="104" available="true">
+        <name>Детский микроскоп для школьника</name>
+        <url>https://partner.ru/micro</url>
+        <price>3690</price>
+        <categoryId>4</categoryId>
+      </offer>
+    </offers>
+  </shop>
+</yml_catalog>
