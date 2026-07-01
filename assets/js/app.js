@@ -18,9 +18,12 @@
     return `
       <article class="card" data-brand="${p.brand}" data-cat="${p.cat}" data-age="${p.age}"
                data-screen="${p.screen}" data-price="${p.price}">
-        <div class="thumb">
+        <div class="thumb${p.img ? " has-img" : ""}">
           <div class="tags">${badge}${brandFlag}</div>
-          <span>${p.emo}</span>
+          ${p.img
+            ? `<img src="${p.img}" alt="${p.title}" loading="lazy" referrerpolicy="no-referrer"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="emo-fb" style="display:none">${p.emo}</span>`
+            : `<span>${p.emo}</span>`}
         </div>
         <div class="body">
           <div class="brandline">${brandName(p.brand)}</div>
