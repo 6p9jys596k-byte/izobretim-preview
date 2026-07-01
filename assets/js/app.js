@@ -6,6 +6,9 @@
   const rub = n => n.toLocaleString("ru-RU") + " ₽";
   const brandName = id => (S.brands.find(b => b.id === id) || {}).name || id;
   const catName = id => (S.categories.find(c => c.id === id) || {}).name || id;
+  const prod = id => S.products.find(p => String(p.id) === String(id));
+  // префикс пути: страницы в /pages/ ссылаются на корень через ../
+  const BASE = location.pathname.indexOf("/pages/") !== -1 ? "../" : "";
 
   // ----- карточка товара -----
   function card(p) {
@@ -16,8 +19,8 @@
     const note = p.status === "wait" ? `<div class="status-note">⏳ ждём условия партнёра</div>`
                : p.status === "check" ? `<div class="status-note">✎ черновик — проверить</div>` : "";
     return `
-      <article class="card" data-brand="${p.brand}" data-cat="${p.cat}" data-age="${p.age}"
-               data-screen="${p.screen}" data-price="${p.price}">
+      <a class="card" href="${BASE}product.html?id=${p.id}" data-brand="${p.brand}" data-cat="${p.cat}"
+         data-age="${p.age}" data-screen="${p.screen}" data-price="${p.price}">
         <div class="thumb${p.img ? " has-img" : ""}">
           <div class="tags">${badge}${brandFlag}</div>
           ${p.img
@@ -37,10 +40,10 @@
           ${note}
           <div class="foot">
             <div class="price">${old} ${rub(p.price)}</div>
-            <button class="buy" title="В корзину">+</button>
+            <span class="buy" role="button" title="В корзину">+</span>
           </div>
         </div>
-      </article>`;
+      </a>`;
   }
 
   // ----- витрина на главной: подборки -----
@@ -117,14 +120,86 @@
     apply();
   }
 
+  // ----- страница товара -----
+  function mountProduct() {
+    const root = document.getElementById("product-root");
+    if (!root) return;
+    const id = new URLSearchParams(location.search).get("id");
+    const p = prod(id);
+    if (!p) {
+      root.innerHTML = `<div class="empty">Товар не найден. <a href="catalog.html" style="color:var(--brand)">Вернуться в каталог</a></div>`;
+      return;
+    }
+    document.title = `${p.title} — Изобретим`;
+    const badge = p.badge === "hit" ? `<span class="chip hit">Хит</span>`
+                : p.badge === "new" ? `<span class="chip new">Новинка</span>` : "";
+    const brandFlag = p.brand === "enjoy" ? `<span class="chip brand">Флагман</span>` : "";
+    const old = p.old ? `<s>${rub(p.old)}</s>` : "";
+    const save = p.old && p.old > p.price
+      ? `<span class="pd-save">−${Math.round((1 - p.price / p.old) * 100)}%</span>` : "";
+    const note = p.status === "wait" ? `⏳ Ждём условия партнёра — цена и наличие уточняются`
+               : p.status === "check" ? `✎ Черновик карточки — цену и наличие проверяем у бренда` : "";
+
+    const specs = [
+      ["👶", "Возраст", `${p.age} лет`],
+      ["🧩", "Сложность", p.level],
+      ["🙌", "Кто собирает", p.adult],
+      ["⏱", "Время занятия", p.time],
+      ["📱", "Экран/телефон", p.screen ? "нужен (программирование в приложении)" : "не нужен"],
+      ["🔋", "Питание", p.battery ? "нужны батарейки/аккумулятор" : "не требуется"],
+      ["🎯", "Что развивает", p.develops],
+      ["🏷", "Бренд", brandName(p.brand)]
+    ].map(([e, k, v]) => `<div class="spec"><span class="spec-i">${e}</span><span class="spec-k">${k}</span><span class="spec-v">${v}</span></div>`).join("");
+
+    const thumb = p.img
+      ? `<img src="${p.img}" alt="${p.title}" referrerpolicy="no-referrer"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="emo-fb" style="display:none;font-size:120px">${p.emo}</span>`
+      : `<span style="font-size:120px">${p.emo}</span>`;
+
+    root.innerHTML = `
+      <div class="crumbs"><a href="index.html">Главная</a> / <a href="catalog.html?cat=${p.cat}">${catName(p.cat)}</a> / ${p.title}</div>
+      <div class="pd">
+        <div class="pd-gallery${p.img ? " has-img" : ""}">
+          <div class="pd-tags">${badge}${brandFlag}</div>
+          ${thumb}
+        </div>
+        <div class="pd-info">
+          <div class="brandline" style="color:var(--accent);font-weight:700">${brandName(p.brand)}</div>
+          <h1>${p.title}</h1>
+          <div class="pd-price">${old} ${rub(p.price)} ${save}</div>
+          ${note ? `<div class="pd-note">${note}</div>` : ""}
+          <div class="pd-cta">
+            <button class="btn btn-primary btn-lg buy-lg">В корзину</button>
+            <a class="btn btn-ghost btn-lg" href="${p.source || "#"}" target="_blank" rel="noopener">Открыть у бренда ↗</a>
+          </div>
+          <div class="pd-specs">${specs}</div>
+          <div class="pd-trust">🚚 Доставка по России · самовывоз · оплата онлайн</div>
+        </div>
+      </div>`;
+
+    // похожие товары
+    const rel = document.getElementById("product-related");
+    if (rel) {
+      const items = S.products.filter(x => x.cat === p.cat && x.id !== p.id).slice(0, 4);
+      rel.innerHTML = items.length ? items.map(card).join("")
+        : S.products.filter(x => x.id !== p.id).slice(0, 4).map(card).join("");
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     mountHome();
     mountCatalog();
-    // корзина-заглушка
+    mountProduct();
+    // «в корзину» — заглушка; не даём ссылке-карточке сработать
     document.body.addEventListener("click", e => {
-      if (e.target.classList.contains("buy")) {
-        e.target.textContent = "✓";
-        setTimeout(() => (e.target.textContent = "+"), 900);
+      const b = e.target.closest(".buy, .buy-lg");
+      if (b) {
+        e.preventDefault();
+        e.stopPropagation();
+        const label = b.classList.contains("buy-lg") ? "Добавлено ✓" : "✓";
+        const prev = b.textContent;
+        b.textContent = label;
+        setTimeout(() => (b.textContent = prev), 1000);
       }
     });
   });
