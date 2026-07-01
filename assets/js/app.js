@@ -4,7 +4,8 @@
 (function () {
   const S = window.STORE;
   const rub = n => n.toLocaleString("ru-RU") + " ₽";
-  const brandName = id => (S.brands.find(b => b.id === id) || {}).name || id;
+  const brand = id => S.brands.find(b => b.id === id) || {};
+  const brandName = id => brand(id).name || id;
   const catName = id => (S.categories.find(c => c.id === id) || {}).name || id;
   const prod = id => S.products.find(p => String(p.id) === String(id));
   // префикс пути: страницы в /pages/ ссылаются на корень через ../
@@ -36,6 +37,34 @@
     });
   }
 
+  function legalShort(id) {
+    const l = brand(id).legal || {};
+    return l.name || brandName(id);
+  }
+
+  function legalDetails(id) {
+    const l = brand(id).legal || {};
+    if (!l.name) return "";
+    const rows = [
+      l.fullName && ["Полное название", l.fullName],
+      ["Юрлицо/ИП", l.name],
+      l.inn && ["ИНН", l.inn],
+      l.kpp && ["КПП", l.kpp],
+      l.ogrn && ["ОГРН", l.ogrn],
+      l.ogrnip && ["ОГРНИП", l.ogrnip],
+      l.address && ["Адрес", l.address]
+    ].filter(Boolean).map(([k, v]) =>
+      `<div class="legal-row"><span>${k}</span><b>${v}</b></div>`).join("");
+    const source = l.source
+      ? `<a href="${l.source}" target="_blank" rel="noopener">Источник реквизитов</a>` : "";
+    return `
+      <div class="brand-legal">
+        <h3>Производитель / бренд</h3>
+        ${rows}
+        ${source ? `<div class="legal-source">${source}</div>` : ""}
+      </div>`;
+  }
+
   // ----- карточка товара -----
   function card(p) {
     const badge = p.badge === "hit" ? `<span class="chip hit">Хит</span>`
@@ -56,6 +85,7 @@
         </div>
         <div class="body">
           <div class="brandline">${brandName(p.brand)}</div>
+          <div class="makerline">Производитель: ${legalShort(p.brand)}</div>
           <h3>${p.title}</h3>
           <div class="meta">
             <span>👶 ${p.age} лет</span>
@@ -199,6 +229,7 @@
             <a class="btn btn-ghost btn-lg" href="${p.source || "#"}" target="_blank" rel="noopener">Открыть у бренда ↗</a>
           </div>
           <div class="pd-specs">${specs}</div>
+          ${legalDetails(p.brand)}
           <div class="pd-trust">🚚 Доставка по России · самовывоз · оплата онлайн</div>
         </div>
       </div>`;
@@ -262,8 +293,12 @@
             <div class="cart-total-row muted" style="font-size:13px"><span>Доставка</span><span>рассчитаем после оформления</span></div>
             <form id="checkout-form" class="checkout-form" novalidate>
               <input name="name" placeholder="Ваше имя" required>
-              <input name="email" type="email" placeholder="E-mail для чека" required>
+              <input name="email" type="email" placeholder="E-mail для связи" required>
               <input name="phone" type="tel" placeholder="Телефон" required>
+              <label class="agree">
+                <input name="agree" type="checkbox" required>
+                <span>Я принимаю <a href="${BASE}offer.html" target="_blank">оферту</a> и даю <a href="${BASE}consent.html" target="_blank">согласие на обработку данных</a>.</span>
+              </label>
               <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">Оплатить ${rub(total)}</button>
               <div id="pay-msg" class="pay-msg"></div>
               <div class="pay-secure">🔒 Оплата картой через PayKeeper. Данные карты вводятся на защищённой странице банка.</div>
@@ -296,6 +331,9 @@
         const fd = new FormData(form);
         if (!fd.get("name") || !fd.get("email") || !fd.get("phone")) {
           msg.textContent = "Заполните имя, e-mail и телефон."; msg.className = "pay-msg err"; return;
+        }
+        if (!fd.get("agree")) {
+          msg.textContent = "Нужно принять оферту и согласие на обработку данных."; msg.className = "pay-msg err"; return;
         }
         btn.disabled = true; const prev = btn.textContent; btn.textContent = "Создаём счёт…";
         msg.textContent = ""; msg.className = "pay-msg";

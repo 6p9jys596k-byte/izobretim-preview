@@ -4,43 +4,120 @@ window.STORE = {
     {
       "id": "enjoy",
       "name": "Enjoy Robotics",
-      "flag": true
+      "flag": true,
+      "legal": {
+        "name": "ООО «ЭНДЖОЙ РОБОТИКС»",
+        "inn": "9725163520",
+        "kpp": "772501001",
+        "ogrn": "1247700482226",
+        "address": "115280, г. Москва, ул. Ленинская Слобода, д. 26, помещ. 32/29",
+        "source": "https://enjoy-robotics.ru/offer"
+      }
     },
     {
       "id": "amperka",
-      "name": "Амперка"
+      "name": "Амперка",
+      "legal": {
+        "name": "ООО «АМПЕРКА РОБОТС»",
+        "inn": "7709452627",
+        "kpp": "770901001",
+        "ogrn": "1157746235151",
+        "address": "109004, г. Москва, Большой Дровяной пер., д. 6, эт. 3, ком. 6",
+        "source": "https://amperka.ru/"
+      }
     },
     {
       "id": "znatok",
-      "name": "ЗНАТОК"
+      "name": "ЗНАТОК",
+      "legal": {
+        "name": "ООО «ЗНАТОК ПЛЮС»",
+        "inn": "7705903685",
+        "kpp": "770501001",
+        "ogrn": "1097746745392",
+        "address": "109240, г. Москва, ул. Верхняя Радищевская, д. 4, стр. 3, помещ. III, комн. 1И",
+        "source": "https://znatok.ru/contacts/"
+      }
     },
     {
       "id": "fanclastic",
-      "name": "Фанкластик"
+      "name": "Фанкластик",
+      "legal": {
+        "name": "АО «ХИЗ»",
+        "fullName": "АО «Храпуновский инструментальный завод»",
+        "inn": "5031083461",
+        "kpp": "503101001",
+        "ogrn": "1085031060003",
+        "address": "142460, Московская область, рп. им. Воровского, ул. Рабочая, д. 3А",
+        "source": "https://www.fanclastic.ru/"
+      }
     },
     {
       "id": "wowhow",
-      "name": "WOW! HOW?"
+      "name": "WOW! HOW?",
+      "legal": {
+        "name": "ООО «Каникулум»",
+        "inn": "1683025627",
+        "kpp": "168301001",
+        "ogrn": "1251600003632",
+        "address": "420500, Республика Татарстан, г. Иннополис, ул. Университетская, д. 5, пом. 111",
+        "source": "https://wowhow.online/about"
+      }
     },
     {
       "id": "simple",
-      "name": "Простая Наука"
+      "name": "Простая Наука",
+      "legal": {
+        "name": "ИП Мохов Денис Анатольевич",
+        "inn": "634500247351",
+        "ogrnip": "322774600407480",
+        "address": "109444, г. Москва, ул. Ферганская, 1, 18, 281",
+        "source": "https://shop.simplescience.ru/page/kontakty"
+      }
     },
     {
       "id": "mrant",
-      "name": "Мистер Ант"
+      "name": "Мистер Ант",
+      "legal": {
+        "name": "ИП Бекмурадов Андрей Вячеславович",
+        "inn": "690201004009",
+        "ogrnip": "324690000062591",
+        "source": "https://mr-ant.ru/contacts/"
+      }
     },
     {
       "id": "levenhuk",
-      "name": "Levenhuk"
+      "name": "Levenhuk",
+      "legal": {
+        "name": "ПАО «Левенгук»",
+        "inn": "7839462305",
+        "kpp": "783901001",
+        "ogrn": "1127847271177",
+        "address": "190005, г. Санкт-Петербург, Измайловский просп., д. 22, корп. 3, лит. А, пом. 27-Н",
+        "source": "https://www.levenhuk.ru/company/main/"
+      }
     },
     {
       "id": "bondibon",
-      "name": "Bondibon"
+      "name": "Bondibon",
+      "legal": {
+        "name": "ООО «ДЖИН»",
+        "inn": "7728393832",
+        "kpp": "772801001",
+        "ogrn": "5177746370445",
+        "address": "г. Москва, ул. Обручева, д. 27, к. 8",
+        "source": "https://www.bondibon.ru/"
+      }
     },
     {
       "id": "boombaram",
-      "name": "Бумбарам"
+      "name": "Бумбарам",
+      "legal": {
+        "name": "ИП Моисеенко М.А.",
+        "inn": "772601442272",
+        "ogrnip": "309774621500522",
+        "address": "117519, г. Москва, ул. Кировоградская, д. 19, к. 1, кв. 257",
+        "source": "https://www.bumbaram.ru/pages/kontakty"
+      }
     }
   ],
   "categories": [

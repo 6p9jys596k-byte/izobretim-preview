@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "4321"],
       "port": 4321
+    },
+    {
+      "name": "shop",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd /Users/valerij/Sites/izobretim && PORT=3009 npm run dev"],
+      "port": 3009
     }
   ]
 }
