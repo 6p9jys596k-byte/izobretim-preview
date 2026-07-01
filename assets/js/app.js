@@ -10,6 +10,32 @@
   // префикс пути: страницы в /pages/ ссылаются на корень через ../
   const BASE = location.pathname.indexOf("/pages/") !== -1 ? "../" : "";
 
+  // ----- корзина -----
+  const PAY_API = "https://functions.yandexcloud.net/d4e2sbk6rjre32pnfauk";
+  const CART_KEY = "izobretim_cart";
+  const getCart = () => { try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } };
+  const setCart = c => localStorage.setItem(CART_KEY, JSON.stringify(c));
+  const cartCount = () => getCart().reduce((n, i) => n + (i.qty || 1), 0);
+  function addToCart(id, qty) {
+    id = String(id); const c = getCart(); const it = c.find(x => String(x.id) === id);
+    if (it) it.qty = (it.qty || 1) + (qty || 1); else c.push({ id, qty: qty || 1 });
+    setCart(c); updateBadge();
+  }
+  function updateBadge() {
+    const n = cartCount();
+    document.querySelectorAll(".cart-badge").forEach(b => { b.textContent = n; b.style.display = n ? "grid" : "none"; });
+  }
+  function wireCartIcon() {
+    document.querySelectorAll('.icon-btn[title="Корзина"]').forEach(btn => {
+      if (btn.querySelector(".cart-badge")) return;
+      btn.style.position = "relative";
+      btn.addEventListener("click", () => (location.href = BASE + "cart.html"));
+      const badge = document.createElement("span");
+      badge.className = "cart-badge";
+      btn.appendChild(badge);
+    });
+  }
+
   // ----- карточка товара -----
   function card(p) {
     const badge = p.badge === "hit" ? `<span class="chip hit">Хит</span>`
@@ -40,7 +66,7 @@
           ${note}
           <div class="foot">
             <div class="price">${old} ${rub(p.price)}</div>
-            <span class="buy" role="button" title="В корзину">+</span>
+            <span class="buy" role="button" data-id="${p.id}" title="В корзину">+</span>
           </div>
         </div>
       </a>`;
@@ -169,7 +195,7 @@
           <div class="pd-price">${old} ${rub(p.price)} ${save}</div>
           ${note ? `<div class="pd-note">${note}</div>` : ""}
           <div class="pd-cta">
-            <button class="btn btn-primary btn-lg buy-lg">В корзину</button>
+            <button class="btn btn-primary btn-lg buy-lg" data-id="${p.id}">В корзину</button>
             <a class="btn btn-ghost btn-lg" href="${p.source || "#"}" target="_blank" rel="noopener">Открыть у бренда ↗</a>
           </div>
           <div class="pd-specs">${specs}</div>
@@ -186,16 +212,135 @@
     }
   }
 
+  // ----- страница корзины -----
+  function mountCart() {
+    const root = document.getElementById("cart-root");
+    if (!root) return;
+
+    function thumb(p) {
+      return p.img
+        ? `<img src="${p.img}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${p.emo}'))">`
+        : `<span>${p.emo}</span>`;
+    }
+
+    function render() {
+      const c = getCart();
+      if (!c.length) {
+        root.innerHTML = `<div class="empty">🛒 Корзина пуста.<br><a href="catalog.html" class="btn btn-primary" style="margin-top:16px">В каталог →</a></div>`;
+        return;
+      }
+      let total = 0;
+      const rows = c.map(item => {
+        const p = prod(item.id);
+        if (!p) return "";
+        const qty = item.qty || 1;
+        total += p.price * qty;
+        return `
+          <div class="cart-row" data-id="${p.id}">
+            <div class="cart-thumb${p.img ? " has-img" : ""}">${thumb(p)}</div>
+            <div class="cart-mid">
+              <div class="brandline" style="color:var(--accent);font-weight:700;font-size:12px">${brandName(p.brand)}</div>
+              <a href="product.html?id=${p.id}" class="cart-title">${p.title}</a>
+              <div class="muted" style="font-size:13px">${rub(p.price)} / шт</div>
+            </div>
+            <div class="qty">
+              <button data-act="dec" aria-label="минус">−</button>
+              <span>${qty}</span>
+              <button data-act="inc" aria-label="плюс">+</button>
+            </div>
+            <div class="cart-sum">${rub(p.price * qty)}</div>
+            <button class="cart-del" data-act="del" title="Убрать">✕</button>
+          </div>`;
+      }).join("");
+
+      root.innerHTML = `
+        <div class="cart-grid">
+          <div class="cart-list">${rows}</div>
+          <aside class="cart-side">
+            <h3>Ваш заказ</h3>
+            <div class="cart-total-row"><span>Товары (${cartCount()})</span><b id="cart-total">${rub(total)}</b></div>
+            <div class="cart-total-row muted" style="font-size:13px"><span>Доставка</span><span>рассчитаем после оформления</span></div>
+            <form id="checkout-form" class="checkout-form" novalidate>
+              <input name="name" placeholder="Ваше имя" required>
+              <input name="email" type="email" placeholder="E-mail для чека" required>
+              <input name="phone" type="tel" placeholder="Телефон" required>
+              <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">Оплатить ${rub(total)}</button>
+              <div id="pay-msg" class="pay-msg"></div>
+              <div class="pay-secure">🔒 Оплата картой через PayKeeper. Данные карты вводятся на защищённой странице банка.</div>
+            </form>
+          </aside>
+        </div>`;
+
+      // клики по количеству/удалению
+      root.querySelectorAll(".cart-row").forEach(rowEl => {
+        rowEl.addEventListener("click", e => {
+          const act = e.target.getAttribute("data-act");
+          if (!act) return;
+          const id = rowEl.getAttribute("data-id");
+          const cart = getCart();
+          const it = cart.find(x => String(x.id) === String(id));
+          if (!it) return;
+          if (act === "inc") it.qty = (it.qty || 1) + 1;
+          if (act === "dec") it.qty = Math.max(1, (it.qty || 1) - 1);
+          if (act === "del") cart.splice(cart.indexOf(it), 1);
+          setCart(cart); updateBadge(); render();
+        });
+      });
+
+      // оформление и оплата
+      const form = root.querySelector("#checkout-form");
+      form.addEventListener("submit", async e => {
+        e.preventDefault();
+        const msg = form.querySelector("#pay-msg");
+        const btn = form.querySelector("button[type=submit]");
+        const fd = new FormData(form);
+        if (!fd.get("name") || !fd.get("email") || !fd.get("phone")) {
+          msg.textContent = "Заполните имя, e-mail и телефон."; msg.className = "pay-msg err"; return;
+        }
+        btn.disabled = true; const prev = btn.textContent; btn.textContent = "Создаём счёт…";
+        msg.textContent = ""; msg.className = "pay-msg";
+        try {
+          const res = await fetch(PAY_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items: getCart(),
+              customer: { name: fd.get("name"), email: fd.get("email"), phone: fd.get("phone") }
+            })
+          });
+          const data = await res.json();
+          if (data && data.paymentUrl) {
+            msg.textContent = "Переходим к оплате…"; msg.className = "pay-msg ok";
+            location.href = data.paymentUrl;
+          } else {
+            msg.textContent = "Не удалось создать счёт: " + (data.error || "ошибка") + ". Попробуйте ещё раз.";
+            msg.className = "pay-msg err"; btn.disabled = false; btn.textContent = prev;
+          }
+        } catch (err) {
+          msg.textContent = "Сеть недоступна. Проверьте интернет и попробуйте снова.";
+          msg.className = "pay-msg err"; btn.disabled = false; btn.textContent = prev;
+        }
+      });
+    }
+    render();
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    wireCartIcon();
+    updateBadge();
     mountHome();
     mountCatalog();
     mountProduct();
-    // «в корзину» — заглушка; не даём ссылке-карточке сработать
+    mountCart();
+    // очистка корзины на странице «спасибо»
+    if (document.getElementById("thanks-clear")) setCart([]);
+    // «в корзину» — добавляем товар, не даём ссылке-карточке открыться
     document.body.addEventListener("click", e => {
       const b = e.target.closest(".buy, .buy-lg");
       if (b) {
         e.preventDefault();
         e.stopPropagation();
+        if (b.dataset.id) addToCart(b.dataset.id);
         const label = b.classList.contains("buy-lg") ? "Добавлено ✓" : "✓";
         const prev = b.textContent;
         b.textContent = label;
