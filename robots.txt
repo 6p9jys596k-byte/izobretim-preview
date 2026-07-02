@@ -1,4 +1,2 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://6p9jys596k-byte.github.io/izobretim-preview/sitemap.xml
